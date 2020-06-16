@@ -12,9 +12,9 @@ pip install requests
 ```
 * Run main.py
 
-* Script will download an excel sheet of prices from the Alko website
-* Type **search_drinks** to find the cheapest drinks
-* Type **help** for all commands
+  * Script will download an excel sheet of prices from the Alko website
+  * Type **search_drinks** to find the cheapest drinks
+  * Type **help** for all commands
 
 * Example session:
 ```
