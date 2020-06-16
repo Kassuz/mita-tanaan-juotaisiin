@@ -7,6 +7,9 @@ from AvailabilityParser import AvailabilityParser
 from Stores import (Store, StoreList, SelectStores)
 from DownloadPrices import DownloadPrices
 
+# Yeah its a global variable
+errors = 0
+
 class Drink:
     def __init__(self, drinkID, name, volume, price, pricePerLiter, category, alcohol, pricePerAlcoholLiter):
         self.drinkID = drinkID
@@ -47,7 +50,7 @@ class DrinkList:
             sheet = workbook["Alkon Hinnasto Tekstitiedostona"]
         except:
             print("Loading prices exel sheet failed! Exiting...")
-            exit()
+            exit(1)
         
         self.title = sheet["A1"].value
         for row in range(5, sheet.max_row):
@@ -72,6 +75,9 @@ class DrinkList:
     # --- END OF __INIT__ ---
 
     def GetBestDrinks(self, selectedStores, selecetedCategories, amount = 10):
+        global errors
+        errors = 0
+        
         if not self.loadSuccess:
             print("Can't sort drinks because loading failed")
             return []
@@ -94,6 +100,9 @@ class DrinkList:
             if len(bestDrinks) == amount:
                 break
 
+        if errors > 0:
+            print("\n" + str(errors) + " errors when fetching stock data :(\n")
+
         return bestDrinks
     # --- END OF GETBESTDRINKS ---
     
@@ -104,32 +113,40 @@ class DrinkList:
     # --- END OF PRINTCATEGORIES ---
 # --- END OF DRINKLIST ---
 
+
 def GetStockInStores(drink, selectedStores):
     # Not really an api and calls sometimes fail. Try 10 times and if still fails, move on
+    global errors
     success = False
     for i in range(0, 10):
+        
+        if errors > 10:
+            print("\n!!! Too many errors fetching stock data !!!")
+            print("Maybe alko broke something? Try without selecting stores next time or just try again ¯\\_(ツ)_/¯")
+            print("Exiting ...")
+            exit()
+        
         try:
-            sleep(0.5) # Let's sleep a little
-            headers = {"Accept-Encoding": "identity", "Cache-Control": "max-age=0"} #Seems to create less errors
+            sleep(1) # Let's sleep a little
+            headers = {"Cache-Control": "max-age=0"} #Seems to create less errors
             url = "https://www.alko.fi/INTERSHOP/web/WFS/Alko-OnlineShop-Site/fi_FI/-/EUR/ViewProduct-Include?SKU="
             response = requests.get(url + drink.drinkID, headers=headers)
 
             if response.status_code == 200:
                 success = True
                 break
-            elif response.status_code == 404:
-                print("404 Error fetching stock for " + drink.name)
-                return []
             elif int(response.status_code / 100) == 4:
-                print("Error fetching stock for " + drink.name)
+                print(">>> Error fetching stock for " + drink.name)
+                print(">>> Response code: " + response.status_code)
+                errors += 1               
                 return []
             elif int(response.status_code / 100) == 5:
-                print("Server error fetching stock for " + drink.name)
-                print("Probably should just exit now...")
-                print("Try without selecting stores next time")
-                exit()               
+                print(">>> Server error fetching stock for " + drink.name)
+                print(">>> Response code: " + str(response.status_code))
+                errors += 1             
+                return []
         except:
-            # print("Error in stock :(")
+            # errors += 1
             continue
 
     if not success:
@@ -150,6 +167,7 @@ def GetStockInStores(drink, selectedStores):
     return storeStocks
 
 def PrintResults(res):
+    print("")
     if len(res) == 0:
         print("No drinks found")
         return
