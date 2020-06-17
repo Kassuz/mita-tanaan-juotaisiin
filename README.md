@@ -4,7 +4,7 @@
 Find the cheapest drinks from Alko
 
 ## Usage
-
+* Get Python 3.8
 * Download dependencies:
 ```
 pip install openpyxl
