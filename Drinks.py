@@ -101,7 +101,7 @@ class DrinkList:
                 break
 
         if errors > 0:
-            print("\n" + str(errors) + " errors when fetching stock data :(\n")
+            print("\n" + str(errors) + " error(s) when fetching stock data :(\n")
 
         return bestDrinks
     # --- END OF GETBESTDRINKS ---
@@ -115,11 +115,11 @@ class DrinkList:
 
 
 def GetStockInStores(drink, selectedStores):
-    # Not really an api and calls sometimes fail. Try 10 times and if still fails, move on
+    # Not really an api and requests sometimes fail. Try 10 times and if still fails, move on
     global errors
     success = False
     for i in range(0, 10):
-        
+        # Shitty error handling. If we get over 10 errors just quit
         if errors > 10:
             print("\n!!! Too many errors fetching stock data !!!")
             print("Maybe alko broke something? Try without selecting stores next time or just try again ¯\\_(ツ)_/¯")
@@ -136,12 +136,12 @@ def GetStockInStores(drink, selectedStores):
                 success = True
                 break
             elif int(response.status_code / 100) == 4:
-                print(">>> Error fetching stock for " + drink.name)
+                print("\nError fetching stock for " + drink.name + ". Skipping...")
                 print(">>> Response code: " + response.status_code)
                 errors += 1               
                 return []
             elif int(response.status_code / 100) == 5:
-                print(">>> Server error fetching stock for " + drink.name)
+                print("\nServer error fetching stock for " + drink.name + ". Skipping...")
                 print(">>> Response code: " + str(response.status_code))
                 errors += 1             
                 return []
@@ -180,27 +180,16 @@ def PrintResults(res):
 
         print(str(i+1) + ": " + drink.name)
         print("--- https://alko.fi/tuotteet/" + drink.drinkID + "/")
-        print("--- Price per 1 liter of 100% alcohol: " + str(drink.pricePerAlcoholLiter) + "€")
-        print("--- Price: " + str(drink.price) + "€    Size: " + str(drink.volume) + "l    Alcohol-%: " + str(round(drink.alcohol * 100, 1)) + "%")
+        print("--- Price per 1 liter of pure alcohol: " + str(drink.pricePerAlcoholLiter) + "€")
+        print("--- Price: " + str(drink.price) + "€    Size: " + str(drink.volume) + "l    Alcohol: " + str(round(drink.alcohol * 100, 1)) + "%")
         print("--- Category: " + drink.category.capitalize())
         
         if type(res[0]) is tuple:
+            print("--- In Stock:")
             stocks = res[i][1]
             for s in stocks:
                 store = s[0]
                 stock = s[1]
-                print("--- " + store.name + ": " + stock)
+                print("----- " + store.name + ": " + stock)
         print("\n")
 
-
-def Test():
-    drinkList = DrinkList("alkon-hinnasto-tekstitiedostona.xlsx")
-    print(drinkList.title)
-    # print("Found drinks: ", len(drinkList.drinks))
-    # drinkList.PrintCategories()
-
-    bestDrinks = drinkList.GetBestDrinks([Store("aa", "aaa", "aaa", "2825")], ["vodkat ja viinat"])
-    PrintResults(bestDrinks)
-
-if __name__ == "__main__":
-    Test()

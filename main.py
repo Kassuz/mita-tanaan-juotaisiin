@@ -106,7 +106,7 @@ def main():
             selectedCategories.clear()
 
         elif command == "search_drinks":
-            results = drinkList.GetBestDrinks(selectedStores, selectedCategories)
+            results = drinkList.GetBestDrinks(selectedStores, selectedCategories, 15)
             PrintResults(results)
 
         elif command == "exit":
